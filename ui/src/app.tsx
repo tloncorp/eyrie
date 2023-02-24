@@ -5,8 +5,8 @@ import api from './api';
 
 async function init() {
   return api.subscribe({
-    app: 'chat',
-    path: '/briefs'
+    app: 'eyrie',
+    path: '/every/~s20'
   });
 }
 
@@ -41,6 +41,7 @@ export function App() {
         <h2 className={cn('flex items-center justify-center p-4 font-bold rounded-md', {
           'bg-red-400': status === 'errored',
           'bg-green-400': status === 'active',
+          'bg-teal-400': status === 'reconnected',
           'bg-yellow-400': status === 'reconnecting',
           'bg-blue-400': status === 'opening',
           'bg-gray-200': status === 'initial'

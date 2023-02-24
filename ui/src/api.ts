@@ -1,7 +1,7 @@
 import {
   fetchEventSource,
   EventSourceMessage,
-} from '@microsoft/fetch-event-source';
+} from './fetch-event-source';
 import { useEyreState } from './state/eyre';
 
 import {
@@ -209,6 +209,7 @@ export class Urbit {
       fetchEventSource(this.channelUrl, {
         ...this.fetchOptions,
         openWhenHidden: this.openWhenHidden,
+        responseTimeout: 25000,
         onopen: async (response) => {
           if (this.verbose) {
             console.log('Opened eventsource', response);
@@ -296,10 +297,12 @@ export class Urbit {
         },
         onerror: (error) => {
           console.warn(error);
-          if (!(error instanceof FatalError) && this.errorCount++ < 4) {
+          this.errorCount++
+          useEyreState.getState().logError({ time: Date.now(), msg: JSON.stringify(error) })
+          if (!(error instanceof FatalError)) {
             useEyreState.getState().update('reconnecting');
             this.onRetry && this.onRetry();
-            return Math.pow(2, this.errorCount - 1) * 750;
+            return Math.min(5000, Math.pow(2, this.errorCount - 1) * 750);
           }
           useEyreState.getState().update('errored');
           this.onError && this.onError(error);

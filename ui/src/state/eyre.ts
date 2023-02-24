@@ -1,7 +1,7 @@
 import produce from "immer";
 import { create } from "zustand";
 
-type ChannelStatus = 'initial' | 'opening' | 'active' | 'reconnecting' | 'errored';
+type ChannelStatus = 'initial' | 'opening' | 'active' | 'reconnecting' | 'reconnected' | 'errored';
 
 interface Fact {
   id: number;
