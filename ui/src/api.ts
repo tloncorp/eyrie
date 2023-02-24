@@ -210,14 +210,14 @@ export class Urbit {
         ...this.fetchOptions,
         openWhenHidden: this.openWhenHidden,
         responseTimeout: 25000,
-        onopen: async (response) => {
+        onopen: async (response, isReconnect) => {
           if (this.verbose) {
             console.log('Opened eventsource', response);
           }
           if (response.ok) {
             this.errorCount = 0;
             this.onOpen && this.onOpen();
-            useEyreState.getState().update('active');
+            useEyreState.getState().update(isReconnect ? 'reconnected' : 'active');
             resolve();
             return; // everything's good
           } else {
