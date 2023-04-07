@@ -1,26 +1,77 @@
 # eyrie
-An app for testing the validity of %eyre and our %eyre client
+An app for testing the validity of %eyre and our %eyre client, [@urbit/http-api]
 
-![Screen Shot 2023-02-23 at 5 38 07 PM](https://user-images.githubusercontent.com/5466421/221055947-95ee6733-30de-4932-a101-ebf5ec18c91f.png)
+https://user-images.githubusercontent.com/5466421/230662895-b3117f90-272b-43df-ab51-78836654b9ad.mp4
 
-## Desk
+## Requirements
+Currently **eyrie** requires at least version `2.4.3-debug` of [@urbit/http-api] to work.
 
-The desk currently has the minimum amount of files necessary to distribute an application and should be distributable immediately. Any further Hoon development should happen here.
+## Getting Started
 
-## UI
+To install **eyrie**
 
-eyrie is built primarily using [React], [Typescript], and [Tailwind CSS]. [Vite] ensures that all code and assets are loaded appropriately, bundles the application for distribution and provides a functional dev environment.
+```bash
+npm install @tloncorp/eyrie
+```
 
-### Getting Started
+Then import:
 
-To get started using eyrie first you need to run `npm install` inside the `ui` directory.
+```javascript
+import '@tloncorp/eyrie'
+```
 
-To develop you'll need a running ship to point to. To do so you first need to add a `.env.local` file to the `ui` directory. This file will not be committed. Adding `VITE_SHIP_URL={URL}` where **{URL}** is the URL of the ship you would like to point to, will allow you to run `npm run dev`. This will proxy all requests to the ship except for those powering the interface, allowing you to see live data.
+and now you can use anywhere you would a normal HTML element:
 
-Regardless of what you run to develop, Vite will hot-reload code changes as you work so you don't have to constantly refresh.
+```html
+<tlon-eyrie />
+```
 
+You must pass **eyrie** your instance of the [@urbit/http-api] client so that it can listen to what's happening in the client, by calling the `init` method on the element:
+
+```javascript
+//...
+const api = new Urbit(...)
+const eyrie = document.querySelector('tlon-eyrie');
+eyrie.init({ api, onReset: () => ... }); 
+//...
+```
+
+### React Example
+If you're using React here's a full example of how it can be used as a component you can include anywhere in your app:
+
+```tsx
+import React, { useEffect, useRef } from 'react';
+import '@tloncorp/eyrie';
+import { Eyrie as Eyr } from '@tloncorp/eyrie';
+import api from '@/api';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'tlon-eyrie': any;
+    }
+  }
+}
+
+export default function Eyrie() {
+  const ref = useRef<Eyr>(null);
+
+  useEffect(() => {
+    ref.current?.init({ api });
+  }, []);
+
+  return <tlon-eyrie ref={ref} class="fixed bottom-4 right-4" />;
+}
+```
+
+### Desk
+
+The desk currently contains a minimal gall agent for testing subscriptions. It responds to any subscriptions at the path `/every/{duration}` with a subscription that will give facts at every time interval given from the duration. The duration should be in the format of a typical `@dr` like `~s20`.
+
+### UI
+
+**eyrie** is mainly a [React] app which is wrapped inside a web component for ease of distribution to any web app regardless of framework and for encapsulation purposes so that we aren't polluting or getting polluted by the outside environment. We use [Vite] as both a way to serve an example UI for testing the component, but also to bundle the component for distribution.
 
 [react]: https://reactjs.org/
-[typescript]: https://www.typescriptlang.org/
-[tailwind css]: https://tailwindcss.com/
 [vite]: https://vitejs.dev/
+[@urbit/http-api]: https://github.com/urbit/js-http-api
