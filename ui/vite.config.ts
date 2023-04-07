@@ -1,3 +1,5 @@
+import path from 'path';
+import dts from 'vite-plugin-dts'
 import { loadEnv, defineConfig } from 'vite';
 import reactRefresh from '@vitejs/plugin-react-refresh';
 import { urbitPlugin } from '@urbit/vite-plugin-urbit';
@@ -9,6 +11,22 @@ export default ({ mode }) => {
   console.log(SHIP_URL);
 
   return defineConfig({
-    plugins: [urbitPlugin({ base: 'eyrie', target: SHIP_URL, secure: false, changeOrigin: true }), reactRefresh()]
+    plugins: [
+      dts({
+        rollupTypes: true
+      }), 
+      urbitPlugin({ base: 'eyrie', target: SHIP_URL, secure: false, changeOrigin: true }), 
+      reactRefresh()
+    ],
+    optimizeDeps: {
+      include: ['@urbit/http-api'],
+    },
+    build: {
+      lib: {
+        entry: path.resolve(__dirname, 'src/eyrie/index.tsx'),
+        name: 'eyrie',
+        fileName: (format) => `index.${format}.js`
+      }
+    }
   });
 };

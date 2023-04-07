@@ -6,3 +6,16 @@
 }
 
 @tailwind utilities;
+
+@keyframes pulseOut {
+  from {
+    background-color: theme(colors.pink.400)
+  }
+  to {
+    background-color: theme(colors.gray.200)
+  }
+}
+
+.pulseOut {
+  animation: 700ms pulseOut forwards;
+}

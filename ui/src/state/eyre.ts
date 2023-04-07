@@ -1,39 +1,55 @@
+import Urbit from "@urbit/http-api";
 import produce from "immer";
 import { create } from "zustand";
 
-type ChannelStatus = 'initial' | 'opening' | 'active' | 'reconnecting' | 'reconnected' | 'errored';
+export type ChannelStatus = 'initial' | 'opening' | 'active' | 'reconnecting' | 'reconnected' | 'errored';
 
-interface Fact {
+export interface Fact {
   id: number;
   time: number;
   data: any;
 }
 
-interface AnError {
+export interface AnError {
   time: number;
   msg: string;
 }
 
-interface IdStatus {
+export interface IdStatus {
   current: number;
   lastHeard: number;
   lastAcknowledged: number;
 }
 
-interface EyreState {
+export interface Subscription {
+  id: number;
+  app?: string;
+  path?: string;
+}
+
+interface UrbitLike {
+  on: Urbit['on']
+  reset: Urbit['reset']
+}
+
+export interface StartParams { api: UrbitLike, onReset?: () => void }
+
+export interface EyreState {
+  open: boolean;
+  toggle: (open: boolean) => void;
   channel: string;
   status: ChannelStatus;
   facts: Fact[];
   errors: AnError[];
   idStatus: IdStatus;
-  update: (status: ChannelStatus) => void;
-  idUpdate: (status: Partial<IdStatus>) => void;
-  reset: (newChannel: string) => void; 
-  logFact: (fact: Fact) => void;
-  logError: (err: AnError) => void;
+  subscriptions: Record<number, Subscription>;
+  onReset: () => void;
+  update: (cb: (draft: EyreState) => void) => void;
+  start: ({ api, onReset }: StartParams) => void;
 }
 
 export const useEyreState = create<EyreState>((set, get) => ({
+  open: false,
   channel: '',
   status: 'initial',
   idStatus: {
@@ -43,40 +59,73 @@ export const useEyreState = create<EyreState>((set, get) => ({
   },
   facts: [],
   errors: [],
-  reset(newChannel) {
-    set(produce((draft: EyreState) => {
-      draft.channel = newChannel;
-      draft.status = 'initial';
-      draft.idStatus = {
-        current: 0,
-        lastHeard: -1,
-        lastAcknowledged: -1
+  subscriptions: {},
+  onReset: () => null,
+  update(cb) {
+    set(produce(cb))
+  },
+  toggle: (open) => {
+    get().update(draft => { draft.open = open });
+  },
+  start: ({ api, onReset }) => {
+    const { update } = get();
+    update((draft) => {
+      draft.onReset = () => {
+        onReset && onReset();
+        api.reset();
       }
-      draft.facts = [];
-      draft.errors = [];
-    }))
-  },
-  update(status) {
-    set(produce((draft: EyreState) => {
-      draft.status = status;
-    }))
-  },
-  idUpdate(status) {
-    set(produce((draft: EyreState) => {
-      draft.idStatus = {
-        ...draft.idStatus,
-        ...status
-      }
-    }))
-  },
-  logFact(fact) {
-    set(produce((draft: EyreState) => {
-      draft.facts.unshift(fact);
-    }))
-  },
-  logError(err) {
-    set(produce((draft: EyreState) => {
-      draft.errors.unshift(err)
-    }))
+    })
+  
+    api.on('id-update', (status) => {
+      update((draft) => {
+        draft.idStatus = {
+          ...draft.idStatus,
+          ...status
+        }
+      })
+    });
+    api.on('status-update', ({ status }) => {
+      update((draft) => {
+        draft.status = status;
+      })
+    });
+    api.on('subscription', ({ status, ...sub }) => {
+      update((draft) => {
+        if (status === 'open') {
+          draft.subscriptions[sub.id] = sub;
+        } else {
+          delete draft.subscriptions[sub.id];
+        }
+      });
+    });
+    api.on('fact', (fact) => {
+      update((draft) => {
+        draft.facts.unshift(fact)
+      })
+    });
+    api.on('error', (err) => {
+      update((draft) => {
+        draft.errors.unshift(err)
+      })
+    });
+    api.on('reset', ({ uid }) => {
+      update((draft) => {
+        draft.channel = uid;
+        draft.status = 'initial';
+        draft.idStatus = {
+          current: 0,
+          lastHeard: -1,
+          lastAcknowledged: -1
+        }
+        draft.facts = [];
+        draft.errors = [];
+      })
+    });
+    api.on('init', ({ uid, subscriptions }) => {
+      update(draft => {
+        draft.channel = uid;
+        draft.subscriptions = subscriptions || [];
+      });
+    })
   }
 }));
