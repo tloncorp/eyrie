@@ -1,7 +1,7 @@
 :~  title+'eyrie'
     info+'An Urbit app that does great things'
     color+0x2e.4347
-    glob-http+['https://bootstrap.urbit.org/glob-0v6.6sqit.a2mlu.h7gov.gn6k0.fd7fj.glob' 0v6.6sqit.a2mlu.h7gov.gn6k0.fd7fj]
+    glob-http+['https://bootstrap.urbit.org/glob-0v4.7j7tl.qs19r.9fa4k.3tc3j.r825p.glob' 0v4.7j7tl.qs19r.9fa4k.3tc3j.r825p]
     base+'eyrie'
     version+[0 0 1]
     website+'https://github.com'
