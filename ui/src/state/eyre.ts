@@ -42,7 +42,7 @@ export interface EyreState {
   facts: Fact[];
   errors: AnError[];
   idStatus: IdStatus;
-  subscriptions: Record<number, Subscription>;
+  subscriptions: Record<string, Subscription>;
   onReset: () => void;
   update: (cb: (draft: EyreState) => void) => void;
   start: ({ api, onReset }: StartParams) => void;
@@ -92,9 +92,9 @@ export const useEyreState = create<EyreState>((set, get) => ({
     api.on('subscription', ({ status, ...sub }) => {
       update((draft) => {
         if (status === 'open') {
-          draft.subscriptions[sub.id] = sub;
+          draft.subscriptions[sub.id.toString()] = sub;
         } else {
-          delete draft.subscriptions[sub.id];
+          delete draft.subscriptions[sub.id.toString()];
         }
       });
     });
@@ -124,7 +124,10 @@ export const useEyreState = create<EyreState>((set, get) => ({
     api.on('init', ({ uid, subscriptions }) => {
       update(draft => {
         draft.channel = uid;
-        draft.subscriptions = subscriptions || [];
+        draft.subscriptions = subscriptions.reduce((subs, s) => {
+          subs[s.id.toString()] = s;
+          return subs;
+        }, {} as Record<string, Subscription>) || {};
       });
     })
   }

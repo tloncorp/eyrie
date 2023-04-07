@@ -15,19 +15,25 @@ ${styles}
 
 export class Eyrie extends HTMLElement {
   root: Root;
+  mountPoint: HTMLDivElement;
 
   constructor() {
     super()
-    const mountPoint = document.createElement('div')
-    mountPoint.classList.add('w-full', 'text-sm', 'font-sans', 'text-gray-900', 'antialiased')
+    this.mountPoint = document.createElement('div')
+    this.mountPoint.classList.add('w-full', 'text-sm', 'font-sans', 'text-gray-900', 'antialiased')
+    this.root = createRoot(this.mountPoint)
+  }
+
+  connectedCallback() {
     this.attachShadow({ mode: 'open' }).appendChild(
       template.content.cloneNode(true)
     )
-
-    this.shadowRoot?.appendChild(mountPoint)
-
-    this.root = createRoot(mountPoint)
+    this.shadowRoot?.appendChild(this.mountPoint)
     this.root.render(<EyrieMenu />)
+  }
+
+  disconnectedCallback() {
+    this.root.unmount();
   }
 
   init(props: StartParams) {
