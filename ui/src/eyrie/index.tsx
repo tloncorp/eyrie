@@ -13,6 +13,9 @@ template.innerHTML = `
 ${styles}
 </style>`
 
+const startEyrie = useEyreState.getState().start;
+export { startEyrie };
+
 export class Eyrie extends HTMLElement {
   root: Root;
   mountPoint: HTMLDivElement;
