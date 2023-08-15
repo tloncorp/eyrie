@@ -35,6 +35,7 @@ interface UrbitLike {
 export interface StartParams { api: UrbitLike, onReset?: () => void }
 
 export interface EyreState {
+  listening: UrbitLike | null;
   open: boolean;
   toggle: (open: boolean) => void;
   channel: string;
@@ -49,6 +50,7 @@ export interface EyreState {
 }
 
 export const useEyreState = create<EyreState>((set, get) => ({
+  listening: null,
   open: false,
   channel: '',
   status: 'initial',
@@ -68,12 +70,18 @@ export const useEyreState = create<EyreState>((set, get) => ({
     get().update(draft => { draft.open = open });
   },
   start: ({ api, onReset }) => {
-    const { update } = get();
+    const { update, listening } = get();
+    if (api === listening) {
+      // same API object, no need to add listeners
+      return;
+    }
     update((draft) => {
       draft.onReset = () => {
         onReset && onReset();
         api.reset();
       }
+
+      draft.listening = api;
     })
   
     api.on('id-update', (status) => {
